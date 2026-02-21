@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Visit Summary</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <header>
+    <h1>My Visit Summary</h1>
+    <span class="role-badge">Patient Portal</span>
+    <a href="/doctor.html" style="margin-left:auto;color:white;font-size:0.85rem;opacity:0.8">Doctor View →</a>
+  </header>
+
+  <main id="main-content">
+    <!-- Visit title -->
+    <div class="card" style="padding-bottom:1rem">
+      <h2 id="visit-title">Your Visit Summary</h2>
+      <p style="font-size:0.8rem;color:#718096">Video ID: <span id="video-id-display">—</span></p>
+    </div>
+
+    <!-- Topics -->
+    <div class="card">
+      <h2>Topics Covered</h2>
+      <div id="topics-area" class="chips">
+        <span class="loading">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <h2>What Your Doctor Discussed</h2>
+      <div id="summary-area">
+        <span class="loading">Generating your summary...</span>
+      </div>
+    </div>
+
+    <!-- Medication Plan -->
+    <div class="card">
+      <h2>Your Medication Plan</h2>
+      <div id="medication-area">
+        <span class="loading">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Chapters / Navigation -->
+    <div class="card">
+      <h2>Navigate Your Visit</h2>
+      <div id="chapters-area">
+        <span class="loading">Loading chapters...</span>
+      </div>
+    </div>
+
+    <!-- Video Player -->
+    <div class="card" id="video-container">
+      <h2>Video Playback</h2>
+      <video id="main-video" controls></video>
+    </div>
+
+    <!-- Search -->
+    <div class="card">
+      <h2>Search Your Visit</h2>
+      <p style="font-size:0.85rem;color:#718096;margin-bottom:0.8rem">
+        Ask anything about your visit and we'll find the exact moment in the recording.
+      </p>
+      <!-- Hidden appointment ID field for search scoping -->
+      <input type="hidden" id="appointment-id-input" value="">
+      <div class="search-row">
+        <input id="search-input" type="text" placeholder="e.g. What did the doctor say about my blood pressure?">
+        <button id="search-btn">Search</button>
+      </div>
+      <div id="search-results"></div>
+    </div>
+  </main>
+
+  <script type="module" src="/static/js/patient.js"></script>
+</body>
+</html>

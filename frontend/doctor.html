@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <header>
+    <h1>Doctor Dashboard</h1>
+    <span class="role-badge">Provider View</span>
+    <a href="/patient.html" style="margin-left:auto;color:white;font-size:0.85rem;opacity:0.8">Patient View →</a>
+  </header>
+
+  <main>
+    <!-- Upload Recording -->
+    <div class="card">
+      <h2>Upload Recording</h2>
+      <form id="upload-form" class="upload-form">
+        <label>Video Recording</label>
+        <input type="file" name="video" accept="video/*" required>
+        <label>Appointment ID</label>
+        <input type="text" name="appointment_id" placeholder="e.g. appt_2026_0221" required>
+        <label>Patient ID</label>
+        <input type="text" name="patient_id" placeholder="e.g. pat_001" required>
+        <label>Doctor ID</label>
+        <input type="text" name="doctor_id" placeholder="e.g. dr_smith" required>
+        <button type="submit">Upload & Index</button>
+        <p id="upload-status"></p>
+      </form>
+    </div>
+
+    <!-- Video Player (for review clips) -->
+    <div class="card" id="video-container" style="display:none">
+      <h2>Clip Playback</h2>
+      <video id="main-video" controls style="width:100%;border-radius:8px"></video>
+    </div>
+
+    <!-- Pending Medication Reviews -->
+    <div class="card">
+      <h2>
+        Pending Medication Reviews
+        <span class="pending-count" id="pending-count"></span>
+      </h2>
+      <p style="font-size:0.85rem;color:#718096;margin-bottom:1rem">
+        Review AI-extracted medication suggestions before they are visible to patients.
+      </p>
+      <div id="reviews-area">
+        <span class="loading">Loading reviews...</span>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/static/js/doctor.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Healthcare Conversation AI</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    .hero {
+      max-width: 540px;
+      margin: 4rem auto;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #2d3748; }
+    .hero p { color: #718096; margin-bottom: 2rem; font-size: 1.05rem; }
+    .portal-buttons { display: flex; gap: 1rem; justify-content: center; }
+    .portal-btn {
+      display: block;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.1s;
+    }
+    .portal-btn:hover { transform: translateY(-2px); }
+    .portal-btn.patient { background: #2b6cb0; color: white; }
+    .portal-btn.doctor { background: white; color: #2b6cb0; border: 2px solid #2b6cb0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Healthcare Conversation AI</h1>
+    <span class="role-badge">Powered by TwelveLabs</span>
+  </header>
+
+  <div class="hero">
+    <h1>Your Visit, Explained</h1>
+    <p>We record, analyze, and summarize doctor-patient conversations so you always know what was said, in plain language.</p>
+    <div class="portal-buttons">
+      <a href="/patient.html" class="portal-btn patient">Patient Portal</a>
+      <a href="/doctor.html" class="portal-btn doctor">Doctor Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>
