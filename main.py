@@ -1,7 +1,8 @@
 from openai import OpenAI
 from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from Valid_EMR import validate_emr_document
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -14,7 +15,7 @@ import re
 app = FastAPI()
 client = OpenAI(
     base_url="https://api.featherless.ai/v1",
-    api_key="rc_948fc6d4e6b6e13cf914448bae5045c3be2a2cd80d499cb0ac8e3e2cbd8cd306",
+    api_key="rc_2212bd54583cdc80cd78db9898dc580081581e195cc7b3e5fb7bd719bd69eb71",
 )
 
 # ── Colours matching the reference image ──────────────────────────────────────
@@ -411,9 +412,24 @@ class ConversationRequest(BaseModel):
     conversation: str
 
 
+# ── Minimum conversation length ──────────────────────────────────────────────
+MIN_CONVERSATION_LENGTH = 200
+
+
 # ── Endpoint 1 — FULL EMR DOCUMENT ───────────────────────────────────────────
 @app.post("/generate-emr")
 def generate_emr(request: ConversationRequest):
+    # Validate input length
+    if len(request.conversation) < MIN_CONVERSATION_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": f"Conversation too short. Minimum {MIN_CONVERSATION_LENGTH} characters required.",
+                "provided_length": len(request.conversation),
+                "minimum_length": MIN_CONVERSATION_LENGTH
+            }
+        )
+    
     response = client.chat.completions.create(
         model="meta-llama/Llama-3.1-8B-Instruct",
         messages=[
@@ -454,6 +470,19 @@ Format the output in clean Markdown:
         ],
     )
     emr_text = response.model_dump()['choices'][0]['message']['content']
+    
+    # ── Validate the generated EMR document ──────────────────────────────────
+    validation_result = validate_emr_document(emr_text)
+    
+    if not validation_result['is_valid']:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Generated document failed EMR validation",
+                "validation_report": validation_result
+            }
+        )
+    
     pdf_path = create_emr_pdf(emr_text)
     return FileResponse(
         pdf_path,
