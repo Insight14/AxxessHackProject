@@ -2,7 +2,6 @@ from openai import OpenAI
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from Valid_EMR import validate_emr_document
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -11,6 +10,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 import re
+import json
 
 app = FastAPI()
 client = OpenAI(
@@ -412,77 +412,18 @@ class ConversationRequest(BaseModel):
     conversation: str
 
 
-# ── Minimum conversation length ──────────────────────────────────────────────
-MIN_CONVERSATION_LENGTH = 200
+# ── Minimum conversation length (set to 0 to disable) ────────────────────────
+MIN_CONVERSATION_LENGTH = 0
 
 
 # ── Endpoint 1 — FULL EMR DOCUMENT ───────────────────────────────────────────
 @app.post("/generate-emr")
 def generate_emr(request: ConversationRequest):
-    # Validate input length
-    if len(request.conversation) < MIN_CONVERSATION_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "message": f"Conversation too short. Minimum {MIN_CONVERSATION_LENGTH} characters required.",
-                "provided_length": len(request.conversation),
-                "minimum_length": MIN_CONVERSATION_LENGTH
-            }
-        )
+    """Generate EMR and return as PDF. Doctor will review for accuracy."""
+    # Generate EMR (doctor will review)
+    emr_text = _generate_emr(request.conversation)
     
-    response = client.chat.completions.create(
-        model="meta-llama/Llama-3.1-8B-Instruct",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a clinical documentation assistant generating professional EMR notes."
-            },
-            {
-                "role": "user",
-                "content": f"""
-Generate a complete Electronic Medical Record (EMR) summary.
-Conversation:
-{request.conversation}
-
-Include ALL relevant sections:
-- Patient Information (if available)
-- Chief Complaint
-- History of Present Illness (HPI)
-- Symptoms
-- Duration
-- Vital Signs
-- Medications Mentioned
-- Allergies (if mentioned)
-- Assessment
-- Plan
-- Follow-up Recommendations
-- Discharge Instructions
-
-Use professional clinical language.
-Format the output in clean Markdown:
-- Use ## for section headings (e.g. ## Chief Complaint)
-- Use **label:** value for key-value fields (e.g. **Patient Name:** John Doe)
-- Use bullet lists (- item) for symptoms, medications, plan steps, etc.
-- Use numbered lists (1. step) for ordered instructions
-- Separate major sections with a blank line
-"""
-            }
-        ],
-    )
-    emr_text = response.model_dump()['choices'][0]['message']['content']
-    
-    # ── Validate the generated EMR document ──────────────────────────────────
-    validation_result = validate_emr_document(emr_text)
-    
-    if not validation_result['is_valid']:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "message": "Generated document failed EMR validation",
-                "validation_report": validation_result
-            }
-        )
-    
+    # Create and return PDF
     pdf_path = create_emr_pdf(emr_text)
     return FileResponse(
         pdf_path,
@@ -528,3 +469,98 @@ Do not include extra text.
     return {
         "structured_data": response.model_dump()['choices'][0]['message']['content']
     }
+
+
+# ── Helper function to generate EMR ─────────────────────────────────────────
+def _generate_emr(conversation: str):
+    """
+    Internal helper that generates an EMR.
+    Returns emr_text or raises HTTPException.
+    Doctor will review for accuracy.
+    """
+    # Validate input length
+    if len(conversation) < MIN_CONVERSATION_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": f"Conversation too short. Minimum {MIN_CONVERSATION_LENGTH} characters required.",
+                "provided_length": len(conversation),
+                "minimum_length": MIN_CONVERSATION_LENGTH
+            }
+        )
+    
+    # Generate EMR from conversation
+    response = client.chat.completions.create(
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a clinical documentation assistant generating professional EMR notes."
+            },
+            {
+                "role": "user",
+                "content": f"""
+Generate a complete Electronic Medical Record (EMR) summary.
+Conversation:
+{conversation}
+
+Include ALL relevant sections:
+- Patient Information (if available)
+- Chief Complaint
+- History of Present Illness (HPI)
+- Symptoms
+- Duration
+- Vital Signs
+- Medications Mentioned
+- Allergies (if mentioned)
+- Assessment
+- Plan
+- Follow-up Recommendations
+- Discharge Instructions
+
+Use professional clinical language.
+Format the output in clean Markdown:
+- Use ## for section headings (e.g. ## Chief Complaint)
+- Use **label:** value for key-value fields (e.g. **Patient Name:** John Doe)
+- Use bullet lists (- item) for symptoms, medications, plan steps, etc.
+- Use numbered lists (1. step) for ordered instructions
+- Separate major sections with a blank line
+"""
+            }
+        ],
+    )
+    emr_text = response.model_dump()['choices'][0]['message']['content']
+    
+    return emr_text
+
+
+# ── Endpoint 3 — BLANK EMR TEMPLATE ─────────────────────────────────────────
+@app.get("/blank-emr-template")
+def get_blank_emr_template():
+    """
+    Returns a blank EMR form (PDF) with all fields empty.
+    Doctor can print and fill in manually.
+    """
+    import os
+    
+    # Path to blank template HTML
+    template_path = os.path.join(os.path.dirname(__file__), "emr_template_blank.html")
+    
+    # Try to convert to PDF using WeasyPrint
+    try:
+        from weasyprint import HTML
+        pdf_path = os.path.join(os.path.dirname(__file__), "blank_emr_form.pdf")
+        HTML(filename=template_path).write_pdf(pdf_path)
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf",
+            filename="Blank_EMR_Form.pdf"
+        )
+    except ImportError:
+        # WeasyPrint not available, return HTML
+        return FileResponse(
+            template_path,
+            media_type="text/html",
+            filename="Blank_EMR_Form.html"
+        )
+

@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMR - Patient Chart</title>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════
+           EMR SOFTWARE INTERFACE STYLES
+           Modeled after Epic, Cerner, Athenahealth
+           ═══════════════════════════════════════════════════════════════════ */
+        
+        :root {
+            --primary: #1a5f7a;
+            --primary-dark: #134b61;
+            --secondary: #57c5b6;
+            --accent: #159895;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --success: #28a745;
+            --bg-dark: #1e2a38;
+            --bg-sidebar: #243447;
+            --bg-main: #f4f6f9;
+            --bg-card: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-light: #ffffff;
+            --border: #dee2e6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            background: var(--bg-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* ─── Layout Container ─────────────────────────────────────────────── */
+        .emr-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════
+           SIDEBAR NAVIGATION
+           ═══════════════════════════════════════════════════════════════════ */
+        .sidebar {
+            width: 220px;
+            background: var(--bg-sidebar);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-logo {
+            padding: 15px 20px;
+            background: var(--bg-dark);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-logo span {
+            color: var(--secondary);
+        }
+        
+        .nav-section {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-section-title {
+            padding: 8px 20px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-light);
+        }
+        
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--text-light);
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .nav-icon {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════
+           MAIN CONTENT AREA
+           ═══════════════════════════════════════════════════════════════════ */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════
+           STICKY PATIENT STORYBOARD (HEADER)
+           ═══════════════════════════════════════════════════════════════════ */
+        .patient-banner {
+            background: var(--primary);
+            color: var(--text-light);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .patient-identity {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .patient-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .patient-name-block h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .patient-demographics {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .patient-demographics span {
+            margin-right: 15px;
+        }
+        
+        .patient-alerts {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .alert-badge {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .alert-badge.allergy {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .alert-badge.code-status {
+            background: var(--warning);
+            color: #000;
+        }
+        
+        .alert-badge.fall-risk {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        /* ─── Secondary Patient Info Bar ───────────────────────────────────── */
+        .patient-info-bar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            gap: 30px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════
+           CHART CONTENT AREA
+           ═══════════════════════════════════════════════════════════════════ */
+        .chart-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        /* ─── Section Cards ────────────────────────────────────────────────── */
+        .section-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 4px 10px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-small:hover {
+            background: var(--bg-main);
+        }
+        
+        .section-body {
+            padding: 16px;
+        }
+        
+        /* ─── Form Elements ────────────────────────────────────────────────── */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 95, 122, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        /* ─── Vitals Grid ──────────────────────────────────────────────────── */
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+        
+        .vital-box {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .vital-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .vital-input {
+            width: 100%;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .vital-input:focus {
+            outline: none;
+        }
+        
+        .vital-unit {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+        
+        /* ─── Checkbox Grid (ROS, Physical Exam) ───────────────────────────── */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+        
+        .checkbox-item label {
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        /* ─── Medication/Diagnosis Search ──────────────────────────────────── */
+        .search-input-container {
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 12px 10px 35px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        /* ─── Billing/Coding Section ───────────────────────────────────────── */
+        .code-entry {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .code-badge {
+            padding: 4px 8px;
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .code-description {
+            flex: 1;
+            font-size: 12px;
+        }
+        
+        .code-remove {
+            color: var(--danger);
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════
+           ACTION BAR (FOOTER)
+           ═══════════════════════════════════════════════════════════════════ */
+        .action-bar {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .signature-info {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .signature-info strong {
+            color: var(--text-primary);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .btn-secondary {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-main);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        /* ─── Scrollbar Styling ────────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="emr-container">
+        <!-- ═══════════════════════════════════════════════════════════════
+             SIDEBAR NAVIGATION
+             ═══════════════════════════════════════════════════════════════ -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <span>◈</span> MedChart
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Patient Chart</div>
+                <a class="nav-item" href="#"><span class="nav-icon">📋</span> Chart Review</a>
+                <a class="nav-item" href="#"><span class="nav-icon">📊</span> Flowsheets</a>
+                <a class="nav-item" href="#"><span class="nav-icon">🔬</span> Labs / Imaging</a>
+                <a class="nav-item" href="#"><span class="nav-icon">📅</span> Encounters</a>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Clinical</div>
+                <a class="nav-item" href="#"><span class="nav-icon">💊</span> Medications</a>
+                <a class="nav-item" href="#"><span class="nav-icon">📝</span> Orders</a>
+                <a class="nav-item active" href="#"><span class="nav-icon">📄</span> Notes</a>
+                <a class="nav-item" href="#"><span class="nav-icon">⚠️</span> Allergies</a>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Admin</div>
+                <a class="nav-item" href="#"><span class="nav-icon">💳</span> Billing</a>
+                <a class="nav-item" href="#"><span class="nav-icon">📁</span> Documents</a>
+                <a class="nav-item" href="#"><span class="nav-icon">✉️</span> Messages</a>
+            </div>
+        </nav>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             MAIN CONTENT
+             ═══════════════════════════════════════════════════════════════ -->
+        <main class="main-content">
+            <!-- ─── Patient Banner (Sticky Storyboard) ─────────────────────── -->
+            <header class="patient-banner">
+                <div class="patient-identity">
+                    <div class="patient-avatar">JD</div>
+                    <div class="patient-name-block">
+                        <h1 id="patient-name">Patient Name</h1>
+                        <div class="patient-demographics">
+                            <span id="patient-age-sex">-- Y/O</span>
+                            <span>DOB: <span id="patient-dob">--/--/----</span></span>
+                            <span>MRN: <span id="patient-mrn">--------</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="patient-alerts">
+                    <span class="alert-badge allergy">⚠ ALLERGIES</span>
+                    <span class="alert-badge code-status">FULL CODE</span>
+                    <span class="alert-badge fall-risk">FALL RISK</span>
+                </div>
+            </header>
+            
+            <!-- ─── Secondary Info Bar ─────────────────────────────────────── -->
+            <div class="patient-info-bar">
+                <div class="info-item">
+                    <span class="info-label">Primary Care</span>
+                    <span class="info-value" id="pcp">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Insurance</span>
+                    <span class="info-value" id="insurance">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Weight</span>
+                    <span class="info-value" id="weight">-- kg</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">BMI</span>
+                    <span class="info-value" id="bmi">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Last Visit</span>
+                    <span class="info-value" id="last-visit">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Room</span>
+                    <span class="info-value" id="room">--</span>
+                </div>
+            </div>
+            
+            <!-- ═══════════════════════════════════════════════════════════════
+                 CHART CONTENT
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div class="chart-area">
+                
+                <!-- ─── Chief Complaint ────────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">📌 Chief Complaint</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <textarea placeholder="Enter the patient's chief complaint..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Vital Signs ────────────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">❤️ Vital Signs</span>
+                        <div class="section-actions">
+                            <button class="btn-small">Import from Device</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="vitals-grid">
+                            <div class="vital-box">
+                                <div class="vital-label">Temperature</div>
+                                <input type="text" class="vital-input" placeholder="--">
+                                <div class="vital-unit">°F</div>
+                            </div>
+                            <div class="vital-box">
+                                <div class="vital-label">Blood Pressure</div>
+                                <input type="text" class="vital-input" placeholder="--/--">
+                                <div class="vital-unit">mmHg</div>
+                            </div>
+                            <div class="vital-box">
+                                <div class="vital-label">Heart Rate</div>
+                                <input type="text" class="vital-input" placeholder="--">
+                                <div class="vital-unit">bpm</div>
+                            </div>
+                            <div class="vital-box">
+                                <div class="vital-label">Resp Rate</div>
+                                <input type="text" class="vital-input" placeholder="--">
+                                <div class="vital-unit">/min</div>
+                            </div>
+                            <div class="vital-box">
+                                <div class="vital-label">O2 Sat</div>
+                                <input type="text" class="vital-input" placeholder="--">
+                                <div class="vital-unit">%</div>
+                            </div>
+                            <div class="vital-box">
+                                <div class="vital-label">Pain</div>
+                                <input type="text" class="vital-input" placeholder="--">
+                                <div class="vital-unit">/10</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── History of Present Illness ─────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">📝 History of Present Illness (HPI)</span>
+                        <div class="section-actions">
+                            <button class="btn-small">Use Template</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <textarea rows="4" placeholder="Document the history of present illness..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Review of Systems ──────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">🔍 Review of Systems (ROS)</span>
+                        <div class="section-actions">
+                            <button class="btn-small">All Negative</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="checkbox-grid">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-fever">
+                                <label for="ros-fever">Fever/Chills</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-fatigue">
+                                <label for="ros-fatigue">Fatigue</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-weight-change">
+                                <label for="ros-weight-change">Weight Change</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-headache">
+                                <label for="ros-headache">Headache</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-vision">
+                                <label for="ros-vision">Vision Changes</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-chest-pain">
+                                <label for="ros-chest-pain">Chest Pain</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-sob">
+                                <label for="ros-sob">Shortness of Breath</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-cough">
+                                <label for="ros-cough">Cough</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-nausea">
+                                <label for="ros-nausea">Nausea/Vomiting</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-abdominal">
+                                <label for="ros-abdominal">Abdominal Pain</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-diarrhea">
+                                <label for="ros-diarrhea">Diarrhea</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-urinary">
+                                <label for="ros-urinary">Urinary Symptoms</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-joint">
+                                <label for="ros-joint">Joint Pain</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-rash">
+                                <label for="ros-rash">Rash</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-anxiety">
+                                <label for="ros-anxiety">Anxiety/Depression</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ros-sleep">
+                                <label for="ros-sleep">Sleep Disturbance</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Allergies ──────────────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">⚠️ Allergies</span>
+                        <div class="section-actions">
+                            <button class="btn-small">+ Add Allergy</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="search-input-container">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" placeholder="Search and add allergies...">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Current Medications ────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">💊 Current Medications</span>
+                        <div class="section-actions">
+                            <button class="btn-small">Reconcile</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="search-input-container">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" placeholder="Search medications...">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Social & Family History ────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">👥 Social & Family History</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Smoking Status</label>
+                                <select>
+                                    <option value="">Select...</option>
+                                    <option value="never">Never Smoker</option>
+                                    <option value="former">Former Smoker</option>
+                                    <option value="current">Current Smoker</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Alcohol Use</label>
+                                <select>
+                                    <option value="">Select...</option>
+                                    <option value="none">None</option>
+                                    <option value="social">Social</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="heavy">Heavy</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Drug Use</label>
+                                <select>
+                                    <option value="">Select...</option>
+                                    <option value="none">None</option>
+                                    <option value="marijuana">Marijuana</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Family History</label>
+                            <textarea rows="2" placeholder="Document relevant family medical history..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Physical Examination ───────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">🩺 Physical Examination</span>
+                        <div class="section-actions">
+                            <button class="btn-small">Normal Exam</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="checkbox-grid">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-general">
+                                <label for="pe-general">General: NAD</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-heent">
+                                <label for="pe-heent">HEENT: Normal</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-neck">
+                                <label for="pe-neck">Neck: Supple</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-lungs">
+                                <label for="pe-lungs">Lungs: CTA bilat</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-heart">
+                                <label for="pe-heart">Heart: RRR, no M/R/G</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-abdomen">
+                                <label for="pe-abdomen">Abdomen: Soft, NT/ND</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-extremities">
+                                <label for="pe-extremities">Extremities: No edema</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-neuro">
+                                <label for="pe-neuro">Neuro: A&Ox3</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-skin">
+                                <label for="pe-skin">Skin: Warm, dry</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pe-psych">
+                                <label for="pe-psych">Psych: Normal affect</label>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Additional Findings</label>
+                            <textarea rows="2" placeholder="Document any abnormal findings..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Assessment / Diagnosis ─────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">🎯 Assessment / Diagnosis</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <textarea rows="3" placeholder="Document your clinical assessment..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Treatment Plan ─────────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">📋 Treatment Plan</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <textarea rows="3" placeholder="Document the treatment plan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Billing / Coding ───────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">💳 Billing / Coding</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>ICD-10 Diagnosis Codes</label>
+                                <div class="search-input-container">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" class="search-input" placeholder="Search ICD-10 codes...">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>CPT Procedure Codes</label>
+                                <div class="search-input-container">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" class="search-input" placeholder="Search CPT codes...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Visit Level</label>
+                            <select>
+                                <option value="">Select E/M Code...</option>
+                                <option value="99212">99212 - Level 2 (Straightforward)</option>
+                                <option value="99213">99213 - Level 3 (Low Complexity)</option>
+                                <option value="99214">99214 - Level 4 (Moderate Complexity)</option>
+                                <option value="99215">99215 - Level 5 (High Complexity)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ─── Follow-up & Instructions ───────────────────────────── -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <span class="section-title">📅 Follow-up & Patient Instructions</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Follow-up Timeframe</label>
+                                <select>
+                                    <option value="">Select...</option>
+                                    <option value="prn">PRN / As Needed</option>
+                                    <option value="1week">1 Week</option>
+                                    <option value="2weeks">2 Weeks</option>
+                                    <option value="1month">1 Month</option>
+                                    <option value="3months">3 Months</option>
+                                    <option value="6months">6 Months</option>
+                                    <option value="1year">1 Year</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Return Precautions</label>
+                                <select>
+                                    <option value="">Select...</option>
+                                    <option value="standard">Standard Precautions</option>
+                                    <option value="er">Go to ER if worsening</option>
+                                    <option value="urgent">Call if no improvement in 48hrs</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Patient Instructions</label>
+                            <textarea rows="3" placeholder="Document patient education and discharge instructions..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ACTION BAR
+                 ═══════════════════════════════════════════════════════════════ -->
+            <footer class="action-bar">
+                <div class="signature-info">
+                    <div><strong>Provider:</strong> <span id="provider-name">--</span> | <strong>NPI:</strong> <span id="provider-npi">----------</span></div>
+                    <div><strong>Encounter Date:</strong> <span id="encounter-date">--/--/----</span> | <strong>Last Saved:</strong> <span id="last-saved">--</span></div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary">Save Draft</button>
+                    <button class="btn btn-secondary">Pend Note</button>
+                    <button class="btn btn-secondary">Route to Nurse</button>
+                    <button class="btn btn-success">✓ Sign & Close Encounter</button>
+                </div>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>
